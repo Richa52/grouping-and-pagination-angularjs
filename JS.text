@@ -1,0 +1,172 @@
+var matterChangeInbox = {
+    variables: {
+
+    },
+    controls: {
+        btnSavefilter: '#btnSavefilter',
+        txtSearchByColumn: '#txtSearchByColumn',
+        btnSearchByColumn: "#btnSearchByColumn"
+    },
+    WebAPIURL: {
+        GetMatterChangeDashboard: 'GetMatterChangeDashboard'
+    }
+}
+app.controller('MatterChangeInboxCtrl', ['$scope', '$modal', '$rootScope', '$timeout', '$location', '$anchorScroll', '$window', 'ApiCall', 'commonMessage', '$filter', 'toastr', 'sharedProperties', 'BookmarkMatter', 'commonService', function ($scope, $modal, $rootScope, $timeout, $location, $anchorScroll, $window, ApiCall, commonMessage, $filter, toastr, sharedProperties, BookmarkMatter, commonService) {
+
+    $scope.formatDate = function (date) {
+        if (date != null && date != "") {
+            dateOut = new Date(date);
+        }
+        else {
+            dateOut = '';
+        }
+        return dateOut
+    };
+
+
+    //Global variables
+    
+    //$scope.exportpath = BaseUrl + '/MatterCenter/MatterExportXLS';
+    $scope.UserId = UserId;
+    /*Pagination Start */
+    $scope.limit = common.variables.defaultepageSize;
+    $scope.viewby = common.variables.defaultpageSelected;
+    $scope.currentPage = 1;
+    $scope.itemsPerPage = $scope.viewby;
+    $scope.maxSize = common.variables.pagerMaxSize; //Number of pager buttons to show
+    $scope.totalItems = "";
+    /*Pagination End */
+   
+    $scope.loading = true;
+  
+    var indexedTeams = [];
+
+    $scope.groupToFilter = function () {
+        indexedTeams = [];
+        return $scope.MatterChangeInboxList;
+    }
+
+    $scope.filterTypes = function (data) {
+        var typeIsNew = indexedTeams.indexOf(data.type) == -1;
+        if (typeIsNew) {
+            indexedTeams.push(data.type);
+        }
+        return typeIsNew;
+    }
+
+    //Records per page dropdown
+    $scope.RecordsPerPage = common.getRecordsPerPage();
+
+    //getRecordsPerPage: function () {
+    //    var recordsPerpage = [5, 10, 15, 20, 50];
+    //    return recordsPerpage;
+    //},
+    //Pagination page change event
+    $scope.pageChanged = function (pageNo) {
+        
+        $(".mCustomScrollbar").mCustomScrollbar("scrollTo", "top", {
+           
+            mouseWheelPixels: 400 //change this to a value, that fits your needs
+        })
+        $scope.currentPage = pageNo;
+    };
+
+    //Set page items based on items per page
+    $scope.setItemsPerPage = function (num) {
+        $scope.itemsPerPage = num;
+    }
+
+   
+
+    // matter Change Inbox  popup
+    $scope.open = function (isAccpet, isReject, matterid) {
+
+        var quickProject = $modal.open({
+            templateUrl: BaseUrl + '/templates/actionModel.html',
+            controller: ['$scope', '$modalInstance', function ($scope, $modalInstance) {
+                var filename = "";
+                var filedata = "";
+                $scope.uploadFile = function (event) {
+                    var files = event.target.files[0];
+                    if (files != 'undefined' && files != null) {
+                        var r = new FileReader();
+                        filename = files.name;
+                        r.onload = function (e) {
+                            filedata = r.result;
+                        }
+                        r.readAsDataURL(files);
+                    }
+                    else {
+                        alert("Please, Select Files.");
+                    }
+                };
+                $scope.IsReject = isReject;
+                $scope.IsAccpet = isAccpet;
+                $scope.ok = function (comments) {
+                    var Requestdata = "";
+                    var API = "";
+                    if (comments == undefined) {
+                        comments = "";
+                    }
+
+                    if (isAccpet) {
+
+                        Requestdata = "{ \"id\": \"" + matterid + "\", \"userId\": \"" + UserId + "\", \"comments\": \"" + comments + "\"}"
+                        API = "MatterChangeCompleted";
+                    }
+                    else if (isReject) {
+
+                        Requestdata = "{\"id\": \"" + matterid + "\", \"userId\": \"" + UserId + "\",\"comments\": \"" + comments + "\", \"attachment\": \"" + filedata + "\" , \"attachmentName\": \"" + filename + "\"}"
+                        API = "MatterChangeRejected";
+                    }
+                    ApiCall.PostApiCall(APIBaseUrl + API, Requestdata).success(function (data, status) {
+                        if (data.matterChangeStatus != null && data.status == "200") {
+                            ///refresh list Matter change list
+
+                            commonMessage.showsSuccessMsg(matterid + "   Matter change status  " + data.matterChangeStatus);
+                        }
+                    });
+                    $modalInstance.close();
+                }
+                $scope.cancel = function () {
+                    $modalInstance.dismiss('cancel');
+                };
+            }],
+            backdrop: 'static',
+            windowClass: 'resetPwd-modal',
+        });
+    }
+
+    //Get  matter Change Inbox items API call
+    $scope.MatterChangeInbox = function () {
+        try {
+            $(common.controls.divLoader).show();
+            var Requestdata = "{\"userId\":\"" + UserId + "\"}";
+            var Api = matterChangeInbox.WebAPIURL.GetMatterChangeDashboard;
+            ApiCall.PostApiCall(APIBaseUrl + Api, Requestdata).success(function (data, status) {
+                if (data.matterChangeList != null && data.matterChangeList != [] && status == "200") {
+                    $timeout(function () {
+                        $scope.MatterChangeInboxList = data.matterChangeList;
+                        $scope.totalItems = $scope.MatterChangeInboxList.length;
+                    });
+                }
+                else {
+                    $scope.loading = false;
+                    $(common.controls.divLoader).hide();
+                    commonMessage.handleUndefiendError(Api + common.variables.GetAPIdataNull);
+                }
+                $(common.controls.divLoader).hide();
+                $scope.loading = false;
+            });
+        }
+        catch (e) {
+            $(common.controls.divLoader).hide();
+            $scope.loading = false;
+            ApiCall.GenrateLogs(Api + " API Exception :" + e);
+        }
+
+    }
+
+    $scope.MatterChangeInbox();
+
+}]);

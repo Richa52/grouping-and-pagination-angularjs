@@ -1,0 +1,120 @@
+
+@{
+    ViewBag.Title = "MatterChangeInbox";
+}
+
+<div class="container-fluid main-container" ng-controller="MatterChangeInboxCtrl">
+    <div class="row">
+        <div class="col-xs-12 content">
+            <div class="page-title">
+                <h1>Matter Change Inbox</h1>
+                <div class="pull-right page-header-filter">
+
+                    <div class="dropdown pull-left export-btn">
+                        <button class="btn btn-primary btn-sm dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                            <i class="icon-export"></i> EXPORT
+                        </button>
+                        <ul class="dropdown-menu  drop-btn" aria-labelledby="dropdownMenu1">
+
+                            <li>
+                                <form id="Matterform" action="{{exportpath}}" method="post">
+                                    <a class="link-btn" href="javascript:;" onclick="$('#Matterform').submit()"><i class="icon-xsl"></i> XLS</a>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <!-- End Page Title -->
+
+            <div ng-if="!MatterChangeInboxList.length && !loading" class="no-data"><i class="fa fa-info-circle"></i> No matter items to show</div>
+
+            <div class="matter-listing">
+               
+                <div class="matter-item" id="{{matter.matterId}}" ng-repeat="key in groupToFilter()  | filter:filterTypes">
+
+                    {{key.type}}
+                    <div class=" matter-item-header" ng-repeat="matter in MatterChangeInboxList.slice(((currentPage-1)*itemsPerPage), ((currentPage)*itemsPerPage)) | filter:{type: key.type}">
+                        <div class="docket-btn">
+                            <div class="btn-group pull-right">
+                                <button type="button" class="btn btn-primary action-btn dropdown-toggle" data-toggle="dropdown">
+                                    ACTION
+                                </button>
+                                <ul class="dropdown-menu" role="menu">
+                                    <li><a href="javascript:;" ng-click="open(true,false,matter.docketNumber)">Accepted</a></li>
+                                    <li><a href="javascript:;" ng-click="open(false,true,matter.docketNumber)">Rejected</a></li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="matter-item-footer">
+                            <div class="mtitem">
+                                <a href="javascript:;" class="mtTitle">{{matter.matterId}}</a>
+                                <small class="mtrNo">MATTER ID</small>
+                            </div>
+
+                            <div class="mtitem">
+                                <span class="mtTitle">{{matter.type}}</span>
+                                <small class="mtrNo">TYPE</small>
+                            </div>
+
+                            <div class="mtitem">
+                                <span class="mtTitle">{{matter.status}}</span>
+                                <small class="mtrNo">status</small>
+                            </div>
+                            <div class="mtitem">
+                                <span class="mtTitle">{{matter.comment}}</span>
+                                <small class="mtrNo">COMMENTS</small>
+                            </div>
+
+                            <div class="mtitem">
+                                <a href="#" class="mtTitle">{{matter.docketingComments}}</a>
+                                <small class="mtrNo">DOCKETING COMMENTS</small>
+                            </div>
+
+                            <div class="mtitem">
+                                <p ng-bind="formatDate(matter.dueDate) | date:'MM/dd/yyyy'"></p>
+                                <small class="mtrNo">DUE DATE</small>
+                            </div>
+
+                            <div class="mtitem">
+                                <a href="#" class="mtTitle">{{matter.attachmentName}}</a>
+                                <small class="mtrNo">ATTACHMENT</small>
+                            </div>
+
+
+
+                        </div>
+                    </div><!-- End matter item -->
+
+                    <div ng-if="MatterChangeInboxList.length && !loading" class="fixed-pagination">
+
+                        <div class="record-per-page">
+                            <p>Records per page</p>
+                            <select ng-change="setItemsPerPage(viewby)" ng-options="x for x in RecordsPerPage" ng-model="viewby"></select>
+                        </div>
+                        <pagination total-items="totalItems" ng-model="currentPage" ng-change="pageChanged(currentPage)" max-size="maxSize" class="pagination-sm" boundary-links="true" rotate="true" num-pages="numPages" items-per-page="itemsPerPage"></pagination>
+
+                    </div>
+
+                </div>	<!-- End matter Listing -->
+
+            </div>
+        </div>
+    </div>
+</div>
+@section customjs
+{
+
+    <script>
+
+        var matterId = '@ViewData["FilterTypeId"]'
+        var searchText = '@ViewData["SearchText"]'
+    </script>
+    @Scripts.Render("~/Content/js/mattercenterjs")
+}
+
+
+
+
+
