@@ -1,0 +1,27 @@
+ $scope.formatDate = function (date) {
+                if (date != null) {
+                    dateOut = new Date(date);
+                    var mm = dateOut.getMonth() + 1;
+                    mm = (mm < 10) ? '0' + mm : mm;
+                    var dd = dateOut.getDate();
+                    dd = (dd < 10) ? '0' + dd : dd;
+                    var yyyy = dateOut.getFullYear();
+                    var date = mm + '/' + dd + '/' + yyyy;
+                }
+                return date;
+            };
+            
+            
+            
+              //search trifold DateRecieved, DocumentName and TagName
+            $scope.Searchby = function (row) {
+               
+                if ($scope.queryDate !== "") {
+                    // || row.SystemDate.indexOf($scope.queryDate || '') !== -1)
+                    return !!((row.DateRecieved.indexOf($scope.queryDate || '') !== -1));
+                }
+
+                return !!((row.DocumentName.indexOf($scope.queryText || '') !== -1 || row.TagName.indexOf($scope.queryText || '') !== -1));
+            };
+            
+              <li class="list-item tag-list clearfix" ng-repeat="trifoldpdflist in  filteredTrifold = (FolderTrifoldList | filter: Searchby)">
